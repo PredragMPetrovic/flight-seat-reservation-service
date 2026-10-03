@@ -1,6 +1,5 @@
 package com.flight.seat.reservation.entity;
 
-import com.flight.seat.reservation.dto.SeatDTO;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,10 +26,4 @@ public class Seat {
     @JoinColumn(name = "flight_id")
     @ToString.Exclude
     private Flight flight;
-
-    public SeatDTO toDTO() {
-        return SeatDTO.builder()
-                .seatNumber(this.seatNumber)
-                .build();
-    }
 }

@@ -3,6 +3,7 @@ package com.flight.seat.reservation.service;
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.entity.Flight;
 import com.flight.seat.reservation.entity.Seat;
+import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import java.util.List;
 public class FlightService {
 
     private final FlightRepository flightRepository;
+    private final FlightMapper flightMapper;
 
     private static final String[] seatNumbers = {
             "1A", "1B", "1C", "1D", "1E", "1F",
@@ -28,13 +30,7 @@ public class FlightService {
     };
 
     public void createFlight(FlightDTO flightDTO) {
-        Flight flight = Flight.builder()
-                .departureCity(flightDTO.getDepartureCity())
-                .departureAirport(flightDTO.getDepartureAirport())
-                .destinationCity(flightDTO.getDestinationCity())
-                .destinationAirport(flightDTO.getDestinationAirport())
-                .departureDateTime(flightDTO.getDepartureDateTime())
-                .build();
+        Flight flight = flightMapper.toEntity(flightDTO);
 
         List<Seat> seats = createSeats(flight);
         flight.setSeats(seats);
@@ -62,24 +58,9 @@ public class FlightService {
     }
 
     public List<FlightDTO> getFlights() {
-        List<Flight> flights = flightRepository.findAll();
-        List<FlightDTO> flightDTOs = new ArrayList<>();
-
-        for (Flight flight : flights) {
-            FlightDTO flightDTO = FlightDTO.builder()
-                    .departureCity(flight.getDepartureCity())
-                    .departureAirport(flight.getDepartureAirport())
-                    .destinationCity(flight.getDestinationCity())
-                    .destinationAirport(flight.getDestinationAirport())
-                    .departureDateTime(flight.getDepartureDateTime())
-                    .seats(flight.getSeats().stream()
-                            .map(Seat::toDTO)
-                            .toList())
-                    .build();
-            flightDTOs.add(flightDTO);
-        }
-
-        return flightDTOs;
+        return flightRepository.findAll().stream()
+                .map(flightMapper::toDTO)
+                .toList();
     }
 
 }
