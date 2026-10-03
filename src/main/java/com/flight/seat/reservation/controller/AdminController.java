@@ -21,6 +21,6 @@ public class AdminController {
     @DeleteMapping("/flights/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteFlight(@PathVariable("id") String flightId) {
-        adminService.deleteFlight(flightId);
+        adminService.deleteFlight(Long.valueOf(flightId));
     }
 }
