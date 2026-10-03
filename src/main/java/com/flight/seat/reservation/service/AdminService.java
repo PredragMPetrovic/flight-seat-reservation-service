@@ -10,8 +10,8 @@ public class AdminService {
 
     private final FlightService flightService;
 
-    public void createFlight(FlightDTO flightDTO) {
-        flightService.createFlight(flightDTO);
+    public FlightDTO createFlight(FlightDTO flightDTO) {
+        return flightService.createFlight(flightDTO);
     }
 
     public void deleteFlight(Long flightId) {

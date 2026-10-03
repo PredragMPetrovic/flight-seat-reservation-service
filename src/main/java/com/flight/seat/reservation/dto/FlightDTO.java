@@ -11,6 +11,7 @@ import java.util.List;
 @ToString
 @Builder
 public class FlightDTO {
+    Long id;
     String departureCity;
     String departureAirport;
     String destinationCity;

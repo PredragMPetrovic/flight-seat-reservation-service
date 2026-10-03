@@ -3,8 +3,11 @@ package com.flight.seat.reservation.controller;
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.service.AdminService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @AllArgsConstructor
@@ -14,13 +17,17 @@ public class AdminController {
 
     @PostMapping("/flights")
     @PreAuthorize("hasRole('ADMIN')")
-    public void createFlight(@RequestBody FlightDTO flightDTO) {
-        adminService.createFlight(flightDTO);
+    public ResponseEntity<FlightDTO> createFlight(@RequestBody FlightDTO flightDTO) {
+        FlightDTO created = adminService.createFlight(flightDTO);
+        return ResponseEntity
+                .created(URI.create("/api/v1/admin/flights/" + created.getId()))
+                .body(created);
     }
 
     @DeleteMapping("/flights/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public void deleteFlight(@PathVariable("id") String flightId) {
-        adminService.deleteFlight(Long.valueOf(flightId));
+    public ResponseEntity<Void> deleteFlight(@PathVariable("id") Long flightId) {
+        adminService.deleteFlight(flightId);
+        return ResponseEntity.noContent().build();
     }
 }

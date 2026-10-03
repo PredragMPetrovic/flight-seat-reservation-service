@@ -29,7 +29,7 @@ public class FlightService {
             "6A", "6B", "6C", "6D", "6E", "6F"
     };
 
-    public void createFlight(FlightDTO flightDTO) {
+    public FlightDTO createFlight(FlightDTO flightDTO) {
         Flight flight = flightMapper.toEntity(flightDTO);
 
         List<Seat> seats = createSeats(flight);
@@ -38,6 +38,7 @@ public class FlightService {
         Flight saved = flightRepository.save(flight);
 
         log.info("Successfully created Flight with id: {}", saved.getId());
+        return flightMapper.toDTO(saved);
     }
 
     public void deleteFlight(Long flightId) {
