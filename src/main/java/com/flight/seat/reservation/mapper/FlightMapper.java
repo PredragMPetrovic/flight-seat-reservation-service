@@ -12,6 +12,7 @@ public interface FlightMapper {
 
     FlightDTO toDTO(Flight flight);
 
+    @Mapping(target = "passengerId", source = "booking.passenger.id")
     SeatDTO toDTO(Seat seat);
 
     @Mapping(target = "id", ignore = true)

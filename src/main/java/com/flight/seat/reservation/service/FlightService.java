@@ -2,11 +2,14 @@ package com.flight.seat.reservation.service;
 
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.dto.SeatDTO;
+import com.flight.seat.reservation.entity.Booking;
 import com.flight.seat.reservation.entity.Flight;
+import com.flight.seat.reservation.entity.Passenger;
 import com.flight.seat.reservation.entity.Seat;
 import com.flight.seat.reservation.enums.SeatStatus;
 import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
+import com.flight.seat.reservation.repository.PassengerRepository;
 import com.flight.seat.reservation.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ public class FlightService {
 
     private final FlightRepository flightRepository;
     private final SeatRepository seatRepository;
+    private final PassengerRepository passengerRepository;
     private final FlightMapper flightMapper;
 
     private static final String[] seatNumbers = {
@@ -84,11 +88,36 @@ public class FlightService {
                     "Seat %s on flight %d is not available".formatted(seatDTO.getSeatNumber(), flightId));
         }
 
+        Passenger passenger = getPassenger(seatDTO.getPassengerId());
+
+        Booking booking = Booking.builder()
+                .seat(seat)
+                .passenger(passenger)
+                .build();
+        seat.setBooking(booking);
         seat.setStatus(SeatStatus.RESERVED);
-        seat.setPassengerId(seatDTO.getPassengerId());
 
         Seat saved = seatRepository.save(seat);
-        log.info("Reserved seat {} on flight {}", saved.getSeatNumber(), flightId);
+        log.info("Reserved seat {} on flight {} for passenger {}",
+                saved.getSeatNumber(), flightId, passenger.getId());
         return flightMapper.toDTO(saved);
+    }
+
+    private Passenger getPassenger(String passengerId) {
+        if (passengerId == null || passengerId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "passengerId is required");
+        }
+
+        long id;
+        try {
+            id = Long.parseLong(passengerId);
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "passengerId must be a number: " + passengerId);
+        }
+
+        return passengerRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Passenger %d not found".formatted(id)));
     }
 }

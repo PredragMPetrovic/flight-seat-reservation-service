@@ -28,7 +28,6 @@ public class SeatScheduler {
 
         for (Seat seat : reservedSeats) {
             seat.setStatus(SeatStatus.AVAILABLE);
-            seat.setPassengerId(null);
         }
 
         seatRepository.saveAll(reservedSeats);
