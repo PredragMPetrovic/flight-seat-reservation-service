@@ -1,5 +1,6 @@
 package com.flight.seat.reservation.entity;
 
+import com.flight.seat.reservation.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,4 +26,7 @@ public class Booking {
     @OneToOne
     @JoinColumn(name = "passenger_id", unique = true)
     private Passenger passenger;
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
 }

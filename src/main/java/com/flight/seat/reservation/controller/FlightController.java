@@ -1,5 +1,6 @@
 package com.flight.seat.reservation.controller;
 
+import com.flight.seat.reservation.dto.BookingDTO;
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.dto.SeatDTO;
 import com.flight.seat.reservation.service.FlightService;
@@ -21,7 +22,7 @@ public class FlightController {
     }
 
     @PostMapping("/{id}/bookings")
-    public ResponseEntity<SeatDTO> reserveSeat(@PathVariable("id") Long flightId, @RequestBody SeatDTO seatDTO) {
+    public ResponseEntity<BookingDTO> reserveSeat(@PathVariable("id") Long flightId, @RequestBody SeatDTO seatDTO) {
         return ResponseEntity.ok(flightService.reserveSeat(flightId, seatDTO));
     }
 

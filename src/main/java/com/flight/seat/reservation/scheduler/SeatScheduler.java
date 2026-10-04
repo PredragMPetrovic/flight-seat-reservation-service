@@ -28,6 +28,7 @@ public class SeatScheduler {
 
         for (Seat seat : reservedSeats) {
             seat.setStatus(SeatStatus.AVAILABLE);
+            seat.setBooking(null);
         }
 
         seatRepository.saveAll(reservedSeats);

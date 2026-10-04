@@ -2,12 +2,15 @@ package com.flight.seat.reservation.service;
 
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.dto.SeatDTO;
+import com.flight.seat.reservation.dto.BookingDTO;
 import com.flight.seat.reservation.entity.Booking;
 import com.flight.seat.reservation.entity.Flight;
 import com.flight.seat.reservation.entity.Passenger;
 import com.flight.seat.reservation.entity.Seat;
+import com.flight.seat.reservation.enums.BookingStatus;
 import com.flight.seat.reservation.enums.SeatStatus;
 import com.flight.seat.reservation.mapper.FlightMapper;
+import com.flight.seat.reservation.mapper.BookingMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
 import com.flight.seat.reservation.repository.PassengerRepository;
 import com.flight.seat.reservation.repository.SeatRepository;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ public class FlightService {
     private final SeatRepository seatRepository;
     private final PassengerRepository passengerRepository;
     private final FlightMapper flightMapper;
+    private final BookingMapper bookingMapper;
 
     private static final String[] seatNumbers = {
             "1A", "1B", "1C", "1D", "1E", "1F",
@@ -75,7 +80,8 @@ public class FlightService {
                 .toList();
     }
 
-    public SeatDTO reserveSeat(Long flightId, SeatDTO seatDTO) {
+    @Transactional
+    public BookingDTO reserveSeat(Long flightId, SeatDTO seatDTO) {
         Seat seat = seatRepository
                 .findByFlightIdAndSeatNumber(flightId, seatDTO.getSeatNumber())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -93,14 +99,17 @@ public class FlightService {
         Booking booking = Booking.builder()
                 .seat(seat)
                 .passenger(passenger)
+                .status(BookingStatus.PENDING)
                 .build();
         seat.setBooking(booking);
         seat.setStatus(SeatStatus.RESERVED);
 
         Seat saved = seatRepository.save(seat);
+
         log.info("Reserved seat {} on flight {} for passenger {}",
                 saved.getSeatNumber(), flightId, passenger.getId());
-        return flightMapper.toDTO(saved);
+
+        return bookingMapper.toDTO(saved.getBooking());
     }
 
     private Passenger getPassenger(String passengerId) {
