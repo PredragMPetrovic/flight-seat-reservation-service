@@ -1,13 +1,18 @@
 package com.flight.seat.reservation.service;
 
 import com.flight.seat.reservation.dto.FlightDTO;
+import com.flight.seat.reservation.dto.SeatDTO;
 import com.flight.seat.reservation.entity.Flight;
 import com.flight.seat.reservation.entity.Seat;
+import com.flight.seat.reservation.enums.SeatStatus;
 import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
+import com.flight.seat.reservation.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +23,7 @@ import java.util.List;
 public class FlightService {
 
     private final FlightRepository flightRepository;
+    private final SeatRepository seatRepository;
     private final FlightMapper flightMapper;
 
     private static final String[] seatNumbers = {
@@ -52,6 +58,7 @@ public class FlightService {
             Seat seat = Seat.builder()
                     .flight(flight)
                     .seatNumber(seatNumber)
+                    .status(SeatStatus.AVAILABLE)
                     .build();
             seats.add(seat);
         }
@@ -64,4 +71,24 @@ public class FlightService {
                 .toList();
     }
 
+    public SeatDTO reserveSeat(Long flightId, SeatDTO seatDTO) {
+        Seat seat = seatRepository
+                .findByFlightIdAndSeatNumber(flightId, seatDTO.getSeatNumber())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Seat %s not found on flight %d".formatted(seatDTO.getSeatNumber(), flightId)));
+
+        if (seat.getStatus() != SeatStatus.AVAILABLE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Seat %s on flight %d is not available".formatted(seatDTO.getSeatNumber(), flightId));
+        }
+
+        seat.setStatus(SeatStatus.RESERVED);
+        seat.setPassengerId(seatDTO.getPassengerId());
+
+        Seat saved = seatRepository.save(seat);
+        log.info("Reserved seat {} on flight {}", saved.getSeatNumber(), flightId);
+        return flightMapper.toDTO(saved);
+    }
 }
