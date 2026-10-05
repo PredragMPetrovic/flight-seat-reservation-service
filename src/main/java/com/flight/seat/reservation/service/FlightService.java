@@ -17,6 +17,7 @@ import com.flight.seat.reservation.repository.SeatRepository;
 import com.flight.seat.reservation.util.BookingWindowValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,7 +118,16 @@ public class FlightService {
         seat.setBooking(booking);
         seat.setStatus(SeatStatus.RESERVED);
 
-        Seat saved = seatRepository.save(seat);
+        Seat saved;
+        try {
+            saved = seatRepository.saveAndFlush(seat);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Concurrent booking conflict for seat {} on flight {}",
+                    seatDTO.getSeatNumber(), flightId);
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Seat %s on flight %d is no longer available".formatted(seatDTO.getSeatNumber(), flightId));
+        }
 
         log.info("Reserved seat {} on flight {} for passenger {}",
                 saved.getSeatNumber(), flightId, passenger.getId());

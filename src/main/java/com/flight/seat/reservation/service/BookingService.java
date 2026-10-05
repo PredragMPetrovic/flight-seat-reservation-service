@@ -14,6 +14,7 @@ import com.flight.seat.reservation.repository.SeatRepository;
 import com.flight.seat.reservation.util.BookingWindowValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,10 +48,21 @@ public class BookingService {
         }
 
         Seat seat = booking.get().getSeat();
+        if (seat.getStatus() != SeatStatus.RESERVED) {
+            throw new SessionExpiredException("Your reservation is no longer valid. Please try booking again.");
+        }
+
         seat.setStatus(SeatStatus.OCCUPIED);
         booking.get().setStatus(BookingStatus.CONFIRMED);
         seat.setBooking(booking.get());
-        Seat savedSeat = seatRepository.save(seat);
+
+        Seat savedSeat;
+        try {
+            savedSeat = seatRepository.saveAndFlush(seat);
+        } catch (OptimisticLockingFailureException e) {
+            log.warn("Reservation {} was modified concurrently during confirmation", reservationId);
+            throw new SessionExpiredException("Your reservation is no longer valid. Please try booking again.");
+        }
 
         log.info("Reservation confirmed successfully.");
 

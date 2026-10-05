@@ -5,6 +5,7 @@ import com.flight.seat.reservation.enums.SeatStatus;
 import com.flight.seat.reservation.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,11 @@ public class SeatScheduler {
             seat.setBooking(null);
         }
 
-        seatRepository.saveAll(reservedSeats);
-        log.info("Released {} reserved seat(s)", reservedSeats.size());
+        try {
+            seatRepository.saveAll(reservedSeats);
+            log.info("Released {} reserved seat(s)", reservedSeats.size());
+        } catch (OptimisticLockingFailureException e) {
+            log.warn("Some reserved seats were modified concurrently; skipping this run, will retry next cycle");
+        }
     }
 }

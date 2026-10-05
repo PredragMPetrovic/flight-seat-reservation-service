@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.*;
 
 @Entity
@@ -26,6 +27,9 @@ public class Seat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String seatNumber;
+
+    @Version
+    private Long version;
 
     @Enumerated(EnumType.STRING)
     private SeatStatus status;

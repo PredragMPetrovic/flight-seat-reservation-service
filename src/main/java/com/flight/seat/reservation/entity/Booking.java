@@ -19,6 +19,9 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @OneToOne
     @JoinColumn(name = "seat_id", unique = true)
     private Seat seat;
