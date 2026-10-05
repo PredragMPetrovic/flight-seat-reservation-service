@@ -9,6 +9,7 @@ import com.flight.seat.reservation.flight.entity.Flight;
 import com.flight.seat.reservation.seat.entity.Seat;
 import com.flight.seat.reservation.seat.enums.SeatStatus;
 import com.flight.seat.reservation.exception.BookingWindowException;
+import com.flight.seat.reservation.exception.NotFoundException;
 import com.flight.seat.reservation.exception.SessionExpiredException;
 import com.flight.seat.reservation.seat.repository.SeatRepository;
 import com.flight.seat.reservation.util.BookingWindowValidator;
@@ -79,7 +80,7 @@ public class BookingService {
     public void deleteReservation(Long reservationId) {
         Optional<Booking> booking = bookingRepository.findById(reservationId);
         if (booking.isEmpty()) {
-            throw new IllegalArgumentException("Booking with ID " + reservationId + " not found.");
+            throw new NotFoundException("Booking with ID " + reservationId + " not found.");
         }
 
         Seat seat = booking.get().getSeat();

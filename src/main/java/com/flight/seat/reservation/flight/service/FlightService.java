@@ -15,13 +15,15 @@ import com.flight.seat.reservation.booking.mapper.BookingMapper;
 import com.flight.seat.reservation.passenger.repository.PassengerRepository;
 import com.flight.seat.reservation.seat.repository.SeatRepository;
 import com.flight.seat.reservation.util.BookingWindowValidator;
+import com.flight.seat.reservation.exception.BookingWindowException;
+import com.flight.seat.reservation.exception.InvalidRequestException;
+import com.flight.seat.reservation.exception.NotFoundException;
+import com.flight.seat.reservation.exception.SeatUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,21 +91,18 @@ public class FlightService {
         if (isBookingTooLateForFlight(flightId)) {
             log.warn("Booking is closed for flight {}. Cannot reserve seat {} for passenger {}",
                     flightId, seatDTO.getSeatNumber(), seatDTO.getPassengerId());
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new BookingWindowException(
                     "Booking is closed for this flight. You can only book a seat up to "
                             + bookingWindowValidator.getCutoffMinutes() + " minutes before departure.");
         }
 
         Seat seat = seatRepository
                 .findByFlightIdAndSeatNumber(flightId, seatDTO.getSeatNumber())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> new NotFoundException(
                         "Seat %s not found on flight %d".formatted(seatDTO.getSeatNumber(), flightId)));
 
         if (seat.getStatus() != SeatStatus.AVAILABLE) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new SeatUnavailableException(
                     "Seat %s on flight %d is not available".formatted(seatDTO.getSeatNumber(), flightId));
         }
 
@@ -124,8 +123,7 @@ public class FlightService {
         } catch (DataIntegrityViolationException e) {
             log.warn("Concurrent booking conflict for seat {} on flight {}",
                     seatDTO.getSeatNumber(), flightId);
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new SeatUnavailableException(
                     "Seat %s on flight %d is no longer available".formatted(seatDTO.getSeatNumber(), flightId));
         }
 
@@ -138,8 +136,7 @@ public class FlightService {
     private boolean isBookingTooLateForFlight(Long flightId) {
         Optional<Flight> flight = flightRepository.findById(flightId);
         if (flight.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Flight %d not found".formatted(flightId));
+            throw new NotFoundException("Flight %d not found".formatted(flightId));
         }
 
         return bookingWindowValidator.isBookingTooLate(flight.get().getDepartureDateTime());
@@ -147,19 +144,17 @@ public class FlightService {
 
     private Passenger getPassenger(String passengerId) {
         if (passengerId == null || passengerId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "passengerId is required");
+            throw new InvalidRequestException("passengerId is required");
         }
 
         long id;
         try {
             id = Long.parseLong(passengerId);
         } catch (NumberFormatException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "passengerId must be a number: " + passengerId);
+            throw new InvalidRequestException("passengerId must be a number: " + passengerId);
         }
 
         return passengerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Passenger %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException("Passenger %d not found".formatted(id)));
     }
 }
