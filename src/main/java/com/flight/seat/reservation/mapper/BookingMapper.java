@@ -9,7 +9,7 @@ import org.mapstruct.Mapping;
 public interface BookingMapper {
 
     @Mapping(target = "flightId", source = "seat.flight.id")
-    @Mapping(target = "seatNumber", source = "seat.seatNumber")
+    @Mapping(target = "seatId", source = "seat.id")
     @Mapping(target = "passengerId", source = "passenger.id")
     @Mapping(target = "bookingStatus", source = "status")
     BookingDTO toDTO(Booking booking);

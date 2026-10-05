@@ -11,7 +11,7 @@ import lombok.*;
 public class BookingDTO {
     Long id;
     Long flightId;
-    String seatNumber;
+    Long seatId;
     Long passengerId;
     BookingStatus bookingStatus;
 }
