@@ -11,5 +11,6 @@ public interface BookingMapper {
     @Mapping(target = "flightId", source = "seat.flight.id")
     @Mapping(target = "seatNumber", source = "seat.seatNumber")
     @Mapping(target = "passengerId", source = "passenger.id")
+    @Mapping(target = "bookingStatus", source = "status")
     BookingDTO toDTO(Booking booking);
 }

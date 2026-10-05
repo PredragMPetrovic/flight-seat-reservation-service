@@ -9,6 +9,7 @@ import com.flight.seat.reservation.entity.Passenger;
 import com.flight.seat.reservation.entity.Seat;
 import com.flight.seat.reservation.enums.BookingStatus;
 import com.flight.seat.reservation.enums.SeatStatus;
+import com.flight.seat.reservation.enums.BookingStatus;
 import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.mapper.BookingMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
@@ -100,7 +101,9 @@ public class FlightService {
                 .seat(seat)
                 .passenger(passenger)
                 .status(BookingStatus.PENDING)
+                .status(BookingStatus.PENDING)
                 .build();
+        
         seat.setBooking(booking);
         seat.setStatus(SeatStatus.RESERVED);
 
