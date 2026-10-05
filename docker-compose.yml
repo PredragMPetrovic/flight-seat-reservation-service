@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    image: flight-seat-reservation-service:latest
+    container_name: flight-seat-reservation-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+    restart: unless-stopped
