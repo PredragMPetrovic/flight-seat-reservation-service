@@ -1,20 +1,20 @@
 package com.flight.seat.reservation.service;
 
+import com.flight.seat.reservation.dto.BookingDTO;
 import com.flight.seat.reservation.dto.FlightDTO;
 import com.flight.seat.reservation.dto.SeatDTO;
-import com.flight.seat.reservation.dto.BookingDTO;
 import com.flight.seat.reservation.entity.Booking;
 import com.flight.seat.reservation.entity.Flight;
 import com.flight.seat.reservation.entity.Passenger;
 import com.flight.seat.reservation.entity.Seat;
 import com.flight.seat.reservation.enums.BookingStatus;
 import com.flight.seat.reservation.enums.SeatStatus;
-import com.flight.seat.reservation.enums.BookingStatus;
-import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.mapper.BookingMapper;
+import com.flight.seat.reservation.mapper.FlightMapper;
 import com.flight.seat.reservation.repository.FlightRepository;
 import com.flight.seat.reservation.repository.PassengerRepository;
 import com.flight.seat.reservation.repository.SeatRepository;
+import com.flight.seat.reservation.util.BookingWindowValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,7 @@ public class FlightService {
     private final PassengerRepository passengerRepository;
     private final FlightMapper flightMapper;
     private final BookingMapper bookingMapper;
+    private final BookingWindowValidator bookingWindowValidator;
 
     private static final String[] seatNumbers = {
             "1A", "1B", "1C", "1D", "1E", "1F",
@@ -83,6 +85,15 @@ public class FlightService {
 
     @Transactional
     public BookingDTO reserveSeat(Long flightId, SeatDTO seatDTO) {
+        if (isBookingTooLateForFlight(flightId)) {
+            log.warn("Booking is closed for flight {}. Cannot reserve seat {} for passenger {}",
+                    flightId, seatDTO.getSeatNumber(), seatDTO.getPassengerId());
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Booking is closed for this flight. You can only book a seat up to "
+                            + bookingWindowValidator.getCutoffMinutes() + " minutes before departure.");
+        }
+
         Seat seat = seatRepository
                 .findByFlightIdAndSeatNumber(flightId, seatDTO.getSeatNumber())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -101,7 +112,6 @@ public class FlightService {
                 .seat(seat)
                 .passenger(passenger)
                 .status(BookingStatus.PENDING)
-                .status(BookingStatus.PENDING)
                 .build();
         
         seat.setBooking(booking);
@@ -113,6 +123,16 @@ public class FlightService {
                 saved.getSeatNumber(), flightId, passenger.getId());
 
         return bookingMapper.toDTO(saved.getBooking());
+    }
+
+    private boolean isBookingTooLateForFlight(Long flightId) {
+        Optional<Flight> flight = flightRepository.findById(flightId);
+        if (flight.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Flight %d not found".formatted(flightId));
+        }
+
+        return bookingWindowValidator.isBookingTooLate(flight.get().getDepartureDateTime());
     }
 
     private Passenger getPassenger(String passengerId) {
