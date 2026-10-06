@@ -60,7 +60,7 @@ docker run -p 8080:8080 flight-seat-reservation-service
 
 ## How to test it
 
-- **Run the unit tests:**
+- **Run the tests** (unit + a DB-backed integration suite):
   ```bash
   ./mvnw test
   ```
@@ -144,8 +144,12 @@ Preventing double-booking is the core correctness concern, handled with several 
 ### Structure & error handling
 - **Package-by-feature** (`flight`, `booking`, `seat`, `passenger`, `admin`) to keep each slice cohesive.
 - **DTOs + MapStruct** to decouple the API contract from entities.
-- Centralised exception handling via `@RestControllerAdvice` maps domain exceptions to proper HTTP
-  status codes.
+- **Bean Validation** (`@Valid` + constraints like `@NotBlank`/`@NotNull`/`@Future`) rejects bad
+  input early with `400`s instead of letting it reach the persistence layer.
+- Centralised exception handling via a `@RestControllerAdvice` that extends
+  `ResponseEntityExceptionHandler`: domain exceptions map to proper status codes (`404`, `409`,
+  `410`, …) and framework-level errors (malformed JSON, validation failures, wrong HTTP method)
+  map to `400`/`405` rather than surfacing as `500`.
 
 ---
 
@@ -154,4 +158,6 @@ Preventing double-booking is the core correctness concern, handled with several 
 - Enforce real authentication/authorization (OIDC + method security) instead of permit-all.
 - Replace `ddl-auto=update` with versioned DB migrations on a managed PostgreSQL instance.
 - Replace the polling release job with TTL/Redis-based expiry for precise seat-hold release.
-- Add integration tests (e.g. Testcontainers) and concurrency tests around the reserve/confirm paths.
+- The suite already includes DB-backed integration tests (full HTTP, incl. a concurrent
+  reserve-same-seat race) against in-memory H2; for production I'd also run them against real
+  PostgreSQL via Testcontainers.
