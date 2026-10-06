@@ -51,6 +51,8 @@ class FlightServiceTest {
     private BookingMapper bookingMapper;
     @Mock
     private BookingWindowValidator bookingWindowValidator;
+    @Mock
+    private java.time.Clock clock;
 
     @InjectMocks
     private FlightService flightService;
@@ -131,6 +133,7 @@ class FlightServiceTest {
         when(bookingWindowValidator.isBookingTooLate(flight.getDepartureDateTime())).thenReturn(false);
         when(seatRepository.findByFlightIdAndSeatNumber(1L, "1A")).thenReturn(Optional.of(seat));
         when(passengerRepository.findById(7L)).thenReturn(Optional.of(passenger));
+        when(clock.instant()).thenReturn(Instant.parse("2026-10-06T10:00:00Z"));
         when(seatRepository.saveAndFlush(any(Seat.class))).thenAnswer(inv -> inv.getArgument(0));
         when(bookingMapper.toDTO(any(Booking.class))).thenReturn(expected);
 
@@ -140,6 +143,7 @@ class FlightServiceTest {
         assertThat(seat.getStatus()).isEqualTo(SeatStatus.RESERVED);
         assertThat(seat.getBooking()).isNotNull();
         assertThat(seat.getBooking().getPassenger()).isSameAs(passenger);
+        assertThat(seat.getBooking().getHoldExpiresAt()).isNotNull();
     }
 
     @Test
@@ -234,6 +238,7 @@ class FlightServiceTest {
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
         when(seatRepository.findByFlightIdAndSeatNumber(1L, "1A")).thenReturn(Optional.of(seat));
         when(passengerRepository.findById(7L)).thenReturn(Optional.of(passenger));
+        when(clock.instant()).thenReturn(Instant.parse("2026-10-06T10:00:00Z"));
         when(seatRepository.saveAndFlush(any(Seat.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 

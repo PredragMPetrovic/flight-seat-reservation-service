@@ -21,14 +21,17 @@ import com.flight.seat.reservation.exception.NotFoundException;
 import com.flight.seat.reservation.exception.SeatUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +46,10 @@ public class FlightService {
     private final FlightMapper flightMapper;
     private final BookingMapper bookingMapper;
     private final BookingWindowValidator bookingWindowValidator;
+    private final Clock clock;
+
+    @Value("${booking.hold-minutes:15}")
+    private long holdMinutes;
 
     private static final String[] seatNumbers = {
             "1A", "1B", "1C", "1D", "1E", "1F",
@@ -123,6 +130,7 @@ public class FlightService {
                 .seat(seat)
                 .passenger(passenger)
                 .status(BookingStatus.PENDING)
+                .holdExpiresAt(Instant.now(clock).plus(holdMinutes, ChronoUnit.MINUTES))
                 .build();
         
         seat.setBooking(booking);

@@ -1,5 +1,8 @@
 package com.flight.seat.reservation.seat.scheduler;
 
+import com.flight.seat.reservation.booking.entity.Booking;
+import com.flight.seat.reservation.booking.enums.BookingStatus;
+import com.flight.seat.reservation.booking.repository.BookingRepository;
 import com.flight.seat.reservation.seat.entity.Seat;
 import com.flight.seat.reservation.seat.enums.SeatStatus;
 import com.flight.seat.reservation.seat.repository.SeatRepository;
@@ -10,33 +13,42 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SeatScheduler {
+    private final BookingRepository bookingRepository;
     private final SeatRepository seatRepository;
+    private final Clock clock;
 
-    @Scheduled(fixedDelay = 15 * 60 * 1000)
+    @Scheduled(fixedDelay = 60 * 1000)
     @Transactional
-    public void releaseReservedSeats() {
-        List<Seat> reservedSeats = seatRepository.findByStatus(SeatStatus.RESERVED);
+    public void releaseExpiredHolds() {
+        List<Booking> expiredHolds = bookingRepository
+                .findByStatusAndHoldExpiresAtBefore(BookingStatus.PENDING, Instant.now(clock));
 
-        if (reservedSeats.isEmpty()) {
+        if (expiredHolds.isEmpty()) {
             return;
         }
 
-        for (Seat seat : reservedSeats) {
+        List<Seat> releasedSeats = new ArrayList<>();
+        for (Booking hold : expiredHolds) {
+            Seat seat = hold.getSeat();
             seat.setStatus(SeatStatus.AVAILABLE);
             seat.setBooking(null);
+            releasedSeats.add(seat);
         }
 
         try {
-            seatRepository.saveAll(reservedSeats);
-            log.info("Released {} reserved seat(s)", reservedSeats.size());
+            seatRepository.saveAll(releasedSeats);
+            log.info("Released {} expired seat hold(s)", releasedSeats.size());
         } catch (OptimisticLockingFailureException e) {
-            log.warn("Some reserved seats were modified concurrently; skipping this run, will retry next cycle");
+            log.warn("Some held seats were modified concurrently; skipping this run, will retry next cycle");
         }
     }
 }
