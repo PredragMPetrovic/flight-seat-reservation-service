@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.OptimisticLockingFailureException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +46,7 @@ class BookingServiceTest {
     @InjectMocks
     private BookingService bookingService;
 
-    private Booking reservedBooking(LocalDateTime departure, SeatStatus seatStatus) {
+    private Booking reservedBooking(Instant departure, SeatStatus seatStatus) {
         Flight flight = Flight.builder().id(1L).departureDateTime(departure).build();
         Seat seat = Seat.builder().id(10L).seatNumber("1A").status(seatStatus).flight(flight).build();
         Booking booking = Booking.builder().id(100L).seat(seat).status(BookingStatus.PENDING).build();
@@ -56,7 +56,7 @@ class BookingServiceTest {
 
     @Test
     void confirmReservationSuccessMarksOccupiedAndConfirmed() {
-        Booking booking = reservedBooking(LocalDateTime.now().plusHours(5), SeatStatus.RESERVED);
+        Booking booking = reservedBooking(Instant.now().plusSeconds(5 * 3600), SeatStatus.RESERVED);
         BookingDTO expected = BookingDTO.builder().id(100L).build();
 
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
@@ -81,7 +81,7 @@ class BookingServiceTest {
 
     @Test
     void confirmReservationBookingTooLateThrowsBookingWindow() {
-        Booking booking = reservedBooking(LocalDateTime.now().plusMinutes(10), SeatStatus.RESERVED);
+        Booking booking = reservedBooking(Instant.now().plusSeconds(10 * 60), SeatStatus.RESERVED);
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(true);
         when(bookingWindowValidator.getCutoffMinutes()).thenReturn(45);
@@ -92,7 +92,7 @@ class BookingServiceTest {
 
     @Test
     void confirmReservationSeatNotReservedThrowsSessionExpired() {
-        Booking booking = reservedBooking(LocalDateTime.now().plusHours(5), SeatStatus.AVAILABLE);
+        Booking booking = reservedBooking(Instant.now().plusSeconds(5 * 3600), SeatStatus.AVAILABLE);
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
 
@@ -102,7 +102,7 @@ class BookingServiceTest {
 
     @Test
     void confirmReservationOptimisticLockThrowsSessionExpired() {
-        Booking booking = reservedBooking(LocalDateTime.now().plusHours(5), SeatStatus.RESERVED);
+        Booking booking = reservedBooking(Instant.now().plusSeconds(5 * 3600), SeatStatus.RESERVED);
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
         when(seatRepository.saveAndFlush(any(Seat.class)))
@@ -127,7 +127,7 @@ class BookingServiceTest {
 
     @Test
     void deleteReservationSuccessReleasesSeat() {
-        Booking booking = reservedBooking(LocalDateTime.now().plusHours(5), SeatStatus.RESERVED);
+        Booking booking = reservedBooking(Instant.now().plusSeconds(5 * 3600), SeatStatus.RESERVED);
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
 
         bookingService.deleteReservation(100L);

@@ -26,7 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +59,7 @@ class FlightServiceTest {
         return SeatDTO.builder().seatNumber("1A").passengerId("7").build();
     }
 
-    private Flight flightDepartingAt(LocalDateTime departure) {
+    private Flight flightDepartingAt(Instant departure) {
         return Flight.builder().id(1L).departureDateTime(departure).build();
     }
 
@@ -107,7 +107,7 @@ class FlightServiceTest {
     @Test
     void reserveSeatSuccessReturnsBooking() {
         SeatDTO request = reserveRequest();
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().id(10L).seatNumber("1A").status(SeatStatus.AVAILABLE).flight(flight).build();
         Passenger passenger = Passenger.builder().id(7L).build();
         BookingDTO expected = BookingDTO.builder().id(100L).build();
@@ -129,7 +129,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatBookingTooLateThrowsBookingWindow() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusMinutes(10));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(10 * 60));
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(flight.getDepartureDateTime())).thenReturn(true);
         when(bookingWindowValidator.getCutoffMinutes()).thenReturn(45);
@@ -148,7 +148,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatSeatNotFoundThrowsNotFound() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
         when(seatRepository.findByFlightIdAndSeatNumber(1L, "1A")).thenReturn(Optional.empty());
@@ -159,7 +159,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatSeatNotAvailableThrowsSeatUnavailable() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().seatNumber("1A").status(SeatStatus.RESERVED).flight(flight).build();
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
@@ -171,7 +171,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatMissingPassengerIdThrowsInvalidRequest() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().seatNumber("1A").status(SeatStatus.AVAILABLE).flight(flight).build();
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
@@ -185,7 +185,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatNonNumericPassengerIdThrowsInvalidRequest() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().seatNumber("1A").status(SeatStatus.AVAILABLE).flight(flight).build();
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
@@ -199,7 +199,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatPassengerNotFoundThrowsNotFound() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().seatNumber("1A").status(SeatStatus.AVAILABLE).flight(flight).build();
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
         when(bookingWindowValidator.isBookingTooLate(any())).thenReturn(false);
@@ -212,7 +212,7 @@ class FlightServiceTest {
 
     @Test
     void reserveSeatDataIntegrityViolationThrowsSeatUnavailable() {
-        Flight flight = flightDepartingAt(LocalDateTime.now().plusHours(5));
+        Flight flight = flightDepartingAt(Instant.now().plusSeconds(5 * 3600));
         Seat seat = Seat.builder().seatNumber("1A").status(SeatStatus.AVAILABLE).flight(flight).build();
         Passenger passenger = Passenger.builder().id(7L).build();
         when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));

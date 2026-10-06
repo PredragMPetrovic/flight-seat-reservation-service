@@ -3,7 +3,7 @@ package com.flight.seat.reservation.flight.dto;
 import com.flight.seat.reservation.seat.dto.SeatDTO;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @NoArgsConstructor
@@ -17,6 +17,6 @@ public class FlightDTO {
     String departureAirport;
     String destinationCity;
     String destinationAirport;
-    LocalDateTime departureDateTime;
+    Instant departureDateTime;
     List<SeatDTO> seats;
 }

@@ -17,6 +17,9 @@ RUN ./mvnw -B clean package -DskipTests
 FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
+# Defense in depth: pin the container's zone so any stray LocalDateTime stays consistent.
+ENV TZ=UTC
+
 # Run as a non-root user
 RUN useradd --system --no-create-home --shell /usr/sbin/nologin appuser
 USER appuser
