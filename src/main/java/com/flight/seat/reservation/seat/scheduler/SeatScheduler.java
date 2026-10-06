@@ -26,7 +26,7 @@ public class SeatScheduler {
     private final SeatRepository seatRepository;
     private final Clock clock;
 
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedDelayString = "${booking.sweep-interval-ms:60000}")
     @Transactional
     public void releaseExpiredHolds() {
         List<Booking> expiredHolds = bookingRepository
@@ -45,7 +45,7 @@ public class SeatScheduler {
         }
 
         try {
-            seatRepository.saveAll(releasedSeats);
+            seatRepository.saveAllAndFlush(releasedSeats);
             log.info("Released {} expired seat hold(s)", releasedSeats.size());
         } catch (OptimisticLockingFailureException e) {
             log.warn("Some held seats were modified concurrently; skipping this run, will retry next cycle");

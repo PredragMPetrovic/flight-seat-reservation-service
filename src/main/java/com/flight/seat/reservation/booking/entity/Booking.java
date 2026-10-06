@@ -30,8 +30,8 @@ public class Booking {
     @JoinColumn(name = "seat_id", unique = true)
     private Seat seat;
 
-    @OneToOne
-    @JoinColumn(name = "passenger_id", unique = true)
+    @ManyToOne
+    @JoinColumn(name = "passenger_id")
     private Passenger passenger;
 
     @Enumerated(EnumType.STRING)

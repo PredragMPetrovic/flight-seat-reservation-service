@@ -19,6 +19,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +33,7 @@ public class BookingService {
     private final SeatRepository seatRepository;
     private final BookingMapper bookingMapper;
     private final BookingWindowValidator bookingWindowValidator;
+    private final Clock clock;
 
     @Transactional
     public BookingDTO confirmReservation(Long reservationId) {
@@ -38,6 +41,12 @@ public class BookingService {
         Optional<Booking> booking = bookingRepository.findById(reservationId);
         if (booking.isEmpty()) {
             throw new SessionExpiredException("Your session has expired. Please try booking again.");
+        }
+
+        Instant holdExpiresAt = booking.get().getHoldExpiresAt();
+        if (holdExpiresAt != null && holdExpiresAt.isBefore(Instant.now(clock))) {
+            log.warn("Reservation {} hold expired at {}", reservationId, holdExpiresAt);
+            throw new SessionExpiredException("Your reservation has expired. Please try booking again.");
         }
 
         Flight flight = booking.get().getSeat().getFlight();

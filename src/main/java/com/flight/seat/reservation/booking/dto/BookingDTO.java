@@ -3,6 +3,8 @@ package com.flight.seat.reservation.booking.dto;
 import com.flight.seat.reservation.booking.enums.BookingStatus;
 import lombok.*;
 
+import java.time.Instant;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -14,4 +16,5 @@ public class BookingDTO {
     Long seatId;
     Long passengerId;
     BookingStatus bookingStatus;
+    Instant holdExpiresAt;
 }

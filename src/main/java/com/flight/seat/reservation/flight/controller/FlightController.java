@@ -6,6 +6,7 @@ import com.flight.seat.reservation.flight.service.FlightService;
 import com.flight.seat.reservation.seat.dto.SeatDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class FlightController {
 
     @PostMapping("/{id}/bookings")
     @Operation(summary = "Reserve a seat on a flight (creates a PENDING booking)")
-    public ResponseEntity<BookingDTO> reserveSeat(@PathVariable("id") Long flightId, @RequestBody SeatDTO seatDTO) {
+    public ResponseEntity<BookingDTO> reserveSeat(@PathVariable("id") Long flightId, @Valid @RequestBody SeatDTO seatDTO) {
         return ResponseEntity.ok(flightService.reserveSeat(flightId, seatDTO));
     }
 

@@ -11,6 +11,5 @@ public interface PassengerMapper {
     PassengerDTO toDTO(Passenger passenger);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "booking", ignore = true)
     Passenger toEntity(PassengerDTO passengerDTO);
 }

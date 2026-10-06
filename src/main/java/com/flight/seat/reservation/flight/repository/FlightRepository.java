@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface FlightRepository extends JpaRepository<Flight, Long> {
 
-    @EntityGraph(attributePaths = "seats")
+    @EntityGraph(attributePaths = {"seats", "seats.booking", "seats.booking.passenger"})
     @Query("""
             SELECT f FROM Flight f
             WHERE (:departureCity IS NULL OR LOWER(f.departureCity) = LOWER(:departureCity))

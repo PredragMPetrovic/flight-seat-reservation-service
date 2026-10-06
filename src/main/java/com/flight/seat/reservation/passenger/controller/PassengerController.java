@@ -4,6 +4,7 @@ import com.flight.seat.reservation.passenger.dto.PassengerDTO;
 import com.flight.seat.reservation.passenger.service.PassengerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class PassengerController {
 
     @PostMapping
     @Operation(summary = "Create a passenger")
-    public ResponseEntity<PassengerDTO> createPassenger(@RequestBody PassengerDTO passengerDTO) {
+    public ResponseEntity<PassengerDTO> createPassenger(@Valid @RequestBody PassengerDTO passengerDTO) {
         PassengerDTO created = passengerService.createPassenger(passengerDTO);
         return ResponseEntity
                 .created(URI.create("/api/v1/passengers/" + created.getId()))

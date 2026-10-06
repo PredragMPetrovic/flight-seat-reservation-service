@@ -62,7 +62,7 @@ class SeatSchedulerTest {
         assertThat(s1.getBooking()).isNull();
         assertThat(s2.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
         assertThat(s2.getBooking()).isNull();
-        verify(seatRepository).saveAll(List.of(s1, s2));
+        verify(seatRepository).saveAllAndFlush(List.of(s1, s2));
     }
 
     @Test
@@ -72,7 +72,7 @@ class SeatSchedulerTest {
 
         seatScheduler.releaseExpiredHolds();
 
-        verify(seatRepository, never()).saveAll(anyList());
+        verify(seatRepository, never()).saveAllAndFlush(anyList());
     }
 
     @Test
@@ -80,7 +80,7 @@ class SeatSchedulerTest {
         Seat s1 = heldSeat(1L);
         when(bookingRepository.findByStatusAndHoldExpiresAtBefore(eq(BookingStatus.PENDING), eq(NOW)))
                 .thenReturn(List.of(s1.getBooking()));
-        when(seatRepository.saveAll(anyList())).thenThrow(new OptimisticLockingFailureException("conflict"));
+        when(seatRepository.saveAllAndFlush(anyList())).thenThrow(new OptimisticLockingFailureException("conflict"));
 
         assertThatCode(() -> seatScheduler.releaseExpiredHolds()).doesNotThrowAnyException();
     }
