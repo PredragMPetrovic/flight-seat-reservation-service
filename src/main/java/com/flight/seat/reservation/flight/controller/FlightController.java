@@ -7,9 +7,11 @@ import com.flight.seat.reservation.seat.dto.SeatDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,9 +22,12 @@ public class FlightController {
     private final FlightService flightService;
 
     @GetMapping
-    @Operation(summary = "List all flights")
-    public ResponseEntity<List<FlightDTO>> getFlights() {
-        return ResponseEntity.ok(flightService.getFlights());
+    @Operation(summary = "List flights, optionally filtered by departure date (UTC) and/or route (departure/destination city)")
+    public ResponseEntity<List<FlightDTO>> getFlights(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String departureCity,
+            @RequestParam(required = false) String destinationCity) {
+        return ResponseEntity.ok(flightService.getFlights(date, departureCity, destinationCity));
     }
 
     @PostMapping("/{id}/bookings")

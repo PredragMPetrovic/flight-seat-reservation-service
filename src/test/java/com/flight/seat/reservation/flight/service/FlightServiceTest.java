@@ -91,11 +91,26 @@ class FlightServiceTest {
         Flight f2 = Flight.builder().id(2L).build();
         FlightDTO d1 = FlightDTO.builder().id(1L).build();
         FlightDTO d2 = FlightDTO.builder().id(2L).build();
-        when(flightRepository.findAll()).thenReturn(List.of(f1, f2));
+        when(flightRepository.findFiltered(null, null, null, null)).thenReturn(List.of(f1, f2));
         when(flightMapper.toDTO(f1)).thenReturn(d1);
         when(flightMapper.toDTO(f2)).thenReturn(d2);
 
-        assertThat(flightService.getFlights()).containsExactly(d1, d2);
+        assertThat(flightService.getFlights(null, null, null)).containsExactly(d1, d2);
+    }
+
+    @Test
+    void getFlightsAppliesDateAndRouteFilters() {
+        Flight f1 = Flight.builder().id(1L).build();
+        FlightDTO d1 = FlightDTO.builder().id(1L).build();
+        java.time.Instant from = java.time.LocalDate.of(2026, 10, 6)
+                .atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        java.time.Instant to = java.time.LocalDate.of(2026, 10, 7)
+                .atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        when(flightRepository.findFiltered("Dublin", "London", from, to)).thenReturn(List.of(f1));
+        when(flightMapper.toDTO(f1)).thenReturn(d1);
+
+        assertThat(flightService.getFlights(java.time.LocalDate.of(2026, 10, 6), " Dublin ", "London"))
+                .containsExactly(d1);
     }
 
     @Test

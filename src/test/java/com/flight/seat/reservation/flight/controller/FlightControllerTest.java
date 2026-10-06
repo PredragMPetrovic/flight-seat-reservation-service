@@ -29,9 +29,9 @@ class FlightControllerTest {
     @Test
     void getFlightsReturnsOkWithList() {
         List<FlightDTO> flights = List.of(FlightDTO.builder().id(1L).build());
-        when(flightService.getFlights()).thenReturn(flights);
+        when(flightService.getFlights(null, null, null)).thenReturn(flights);
 
-        ResponseEntity<List<FlightDTO>> response = flightController.getFlights();
+        ResponseEntity<List<FlightDTO>> response = flightController.getFlights(null, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isSameAs(flights);

@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -80,10 +83,18 @@ public class FlightService {
         return seats;
     }
 
-    public List<FlightDTO> getFlights() {
-        return flightRepository.findAll().stream()
+    public List<FlightDTO> getFlights(LocalDate date, String departureCity, String destinationCity) {
+        Instant from = date != null ? date.atStartOfDay(ZoneOffset.UTC).toInstant() : null;
+        Instant to = date != null ? date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant() : null;
+
+        return flightRepository
+                .findFiltered(normalize(departureCity), normalize(destinationCity), from, to).stream()
                 .map(flightMapper::toDTO)
                 .toList();
+    }
+
+    private String normalize(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     @Transactional
